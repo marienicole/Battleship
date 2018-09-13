@@ -19,11 +19,10 @@ if __name__ == "__main__":
     y_loc = args.y_loc
     host = socket.gethostname()
 
-    #serv_response = requests.post('http://%s:%s?x=%s&y=%s' % (host, port, x_loc, y_loc))
+    r = requests.post('http://%s:%s?x=%s&y=%s' %('localhost', port, x_loc, y_loc))
+    print(r)
     conn = http.client.HTTPConnection(host, port)
     conn.request("POST", 'http://%s:%s?x=%s&y=%s' % (host, port, x_loc, y_loc))
     #response = conn.getresponse() For when we get the responses working
     #data = response.read()
     conn.close()
-
-
