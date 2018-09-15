@@ -10,6 +10,7 @@ class Server:
     def __init__(self, port, board_loc):
         self.port = port
         self.board_loc = board_loc
+        self.board = ""
 
         self.read_board(board_loc)
         self.initServer('localhost', port)
@@ -31,11 +32,6 @@ class Server:
 
 
     def initServer(self, host, port):
-        # address = (host, port) #tuple forms address of the server
-        # handler = RequestHandler
-        # http_client = HTTPServer(address, handler)
-        # http_client.serve_forever()
-
         # use socket/threading instead? We are always going to be on localhost
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
@@ -43,24 +39,21 @@ class Server:
 
     def handle_client(self, client):
         request = client.recv(1024)
-        print(request)
-        # we will want to see what the client is sending here
+        resp = self.verify(request, client)
+        # this response needs to be edited so it sends whatever verify hands us
+        # if it's OK, we also need to add another line to the response.
+        # Maybe a separate function to handle writing the response?
+        client.send(resp)
 
 
-
-
-
-class RequestHandler(BaseHTTPRequestHandler):
-    #may need a set_header function?
-    #Also default here to return HTTP OK?
-    def do_POST(self):
-        print("Handles POST requests")
-        #this works from server -> client
-    def do_GET(self):
-        print("Handles GET requests")
-        #probably return the board.txt?
-    #This'll handle HTTP requests/responses by invoking BaseHTTPRequestHandler
-
+    def verify(self, request, client):
+        # this function needs to validate the input and send the appropriate
+        # response to the client:
+        # 1. HTTP Ok --> Hit/sunk
+        # 2. HTTP Not Found --> out of bounds
+        # 3. HTTP Gone --> already fired upon
+        # 4. HTTP Bad Request --> improper format
+        return "that looks great, wow"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Define connection port and users board.')

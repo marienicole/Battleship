@@ -5,24 +5,29 @@ Authored by Marie Morin and Hughe Jackovich.
 '''
 import requests, argparse, socket, http.client
 
+class ClientRequest:
+    def __init__(self, server, port, x_addr, y_addr):
+        self.server = server
+        self.port = port
+        self.x_addr = x_addr
+        self.y_addr = y_addr
+        self.send_request(self.server, self.port, self.x_addr, self.y_addr)
+
+    def send_request(self, server, port, x_addr, y_addr):
+        r = requests.post('http://%s:%s?x=%s&y=%s' %(server, port, x_addr, y_addr))
+        print(r)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Define server IP, connection port and user\'s board.')
     parser.add_argument('server', action='store')
     parser.add_argument('port', action='store')
-    parser.add_argument('x_loc', action='store')
-    parser.add_argument('y_loc', action='store')
+    parser.add_argument('x_addr', action='store')
+    parser.add_argument('y_addr', action='store')
     args = parser.parse_args()                  #Had to comment these out to run
 
-    server_ip = args.server
+    server = args.server
     port = args.port
-    x_loc = args.x_loc
-    y_loc = args.y_loc
-    host = socket.gethostname()
+    x_addr = args.x_addr
+    y_addr = args.y_addr
 
-    r = requests.post('http://%s:%s?x=%s&y=%s' %('localhost', port, x_loc, y_loc))
-    print(r)
-    #conn = http.client.HTTPConnection(host, port)
-    #conn.request("POST", 'http://%s:%s?x=%s&y=%s' % (host, port, x_loc, y_loc))
-    #response = conn.getresponse() For when we get the responses working
-    #data = response.read()
-    #conn.close()
+    c = ClientRequest(server, port, x_addr, y_addr)
