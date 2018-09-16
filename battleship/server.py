@@ -43,7 +43,8 @@ class Server:
         # this response needs to be edited so it sends whatever verify hands us
         # if it's OK, we also need to add another line to the response.
         # Maybe a separate function to handle writing the response?
-        client.send(resp)
+        client.send(b"made it")
+        print("should have sent")
 
 
     def verify(self, request, client):
@@ -53,7 +54,7 @@ class Server:
         # 2. HTTP Not Found --> out of bounds
         # 3. HTTP Gone --> already fired upon
         # 4. HTTP Bad Request --> improper format
-        return "that looks great, wow"
+        print ("that looks great, wow")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Define connection port and users board.')

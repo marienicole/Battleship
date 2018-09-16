@@ -14,8 +14,9 @@ class ClientRequest:
         self.send_request(self.server, self.port, self.x_addr, self.y_addr)
 
     def send_request(self, server, port, x_addr, y_addr):
-        r = requests.post('http://%s:%s?x=%s&y=%s' %(server, port, x_addr, y_addr))
-        print(r)
+        requests.post('http://%s:%s?x=%s&y=%s' %(server, port, x_addr, y_addr))
+        print("are we stuck here?")
+        print(r.text)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Define server IP, connection port and user\'s board.')
