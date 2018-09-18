@@ -5,30 +5,23 @@ Authored by Marie Morin and Hughe Jackovich.
 '''
 import requests, argparse, socket, http.client
 
-class ClientRequest:
-    def __init__(self, server, port, x_addr, y_addr):
-        self.server = server
-        self.port = port
-        self.x_addr = x_addr
-        self.y_addr = y_addr
-        self.send_request(self.server, self.port, self.x_addr, self.y_addr)
-
-    def send_request(self, server, port, x_addr, y_addr):
-        requests.post('http://%s:%s?x=%s&y=%s' %(server, port, x_addr, y_addr))
-        print("are we stuck here?")
-        print(r.text)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Define server IP, connection port and user\'s board.')
-    parser.add_argument('server', action='store')
-    parser.add_argument('port', action='store')
-    parser.add_argument('x_addr', action='store')
-    parser.add_argument('y_addr', action='store')
+    parser.add_argument('server', action='store')#, description='IP of the server')
+    parser.add_argument('port', action='store')#, description='Port to connect to server')
+    parser.add_argument('x_loc', action='store')#, description='X-axis location of fire')
+    parser.add_argument('y_loc', action='store')#, description='Y-axis location of fire')
     args = parser.parse_args()                  #Had to comment these out to run
 
-    server = args.server
+    server_ip = args.server
     port = args.port
-    x_addr = args.x_addr
-    y_addr = args.y_addr
+    x_loc = args.x_loc
+    y_loc = args.y_loc
+    host = socket.gethostname()
 
-    c = ClientRequest(server, port, x_addr, y_addr)
+    #serv_response = requests.post('http://%s:%s?x=%s&y=%s' % (host, port, x_loc, y_loc))
+    conn = http.client.HTTPConnection(host, port)
+    conn.request("POST", 'http://%s:%s?x=%s&y=%s' % (host, port, x_loc, y_loc))
+    response = conn.getresponse()
+    print(response.status, response.reason)
+    conn.close()
