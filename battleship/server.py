@@ -3,7 +3,7 @@
 CSCI 466: Networks Programming Assignment 1.
 Authored by Marie Morin and Hughe Jackovich.
 '''
-import requests, argparse, socket
+import re, argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 
@@ -11,31 +11,46 @@ class BattleshipServer(BaseHTTPRequestHandler):
 
     def do_POST(self):
         hit = self.parse_url(self.path)
-        if hit == 1:
-            self.response("hit=1")
+        if hit == "Gone":
+            self.gone_response(hit)
         else:
-            self.response("hit=0")
-
-
+            self.response(hit)
 
     def do_GET(self):
-        print("Handles GET requests")
+        self.response("OK")
+        if bool(re.search('own', self.path)):
+            file = open('own_board.txt', 'rb')
+        else:
+            file = open('opponent_board.txt', 'rb')
+
+        data = file.read()
+        utf_data= data.decode('utf8').replace('\n', '<br>')
+        binary_data = utf_data.encode('utf-8')
+
+        self.send_response(200)
+        self.wfile.write(binary_data)
+
+        file.close()
+        return
 
     def response(self, msg=None):
         self.send_response(200, msg)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-    def bad_request(self):
-        self.send_response(400)
+    def bad_request(self, msg=None):
+        self.send_response(400, msg)
         self.end_headers()
 
     def not_found(self):
         self.send_response(404)
         self.end_headers()
 
-    def parse_url(self, url):
+    def gone_response(self, msg=None):
+        self.send_response(410, msg)
+        self.end_headers()
 
+    def parse_url(self, url):
         coords = []
         for count in range(len(url)):
             if url[count] == '=':
@@ -43,40 +58,80 @@ class BattleshipServer(BaseHTTPRequestHandler):
 
         coords = [int(i) for i in coords] # list comprehension to change to int list
 
-        if all((i < 11) and (i > -1) for i in coords): # makeshifty, we'll want to protect the type casting
-            return self.fire_shot(coords[0], coords[1]) # or return value & move on from there if option route
+        if all((i < 11) and (i > -1) for i in coords):  # makeshifty, we'll want to protect the type casting
+            return board.calibrate_shot(coords[0], coords[1])  # or return value & move on from there if option route
         else:
-            self.bad_request()
+            self.not_found()
 
-    def fire_shot(self, x, y):
-        # check opp_board for it maybe? to not allow duplicate spots hit?
 
-        # handles updating opponent_board.txt for hits
-        opp_board = open('opponent_board.txt', 'r+')
-        lines = []
-        counter = 0
-        for line in opp_board:
-            if counter == y:
-                line = list(line)
-                line[x] = "X"
-                line = ''.join(line)
-            lines.append(line)
-            counter += 1
-        opp_board.seek(0)
-        opp_board.writelines(lines)
-        opp_board.close()
+class Board:
+
+    def __init__(self):
+        self.ship_health = {'C': 5, 'B': 4, 'R': 3, 'S': 3, 'D': 2}
+        self.player_board = None
+        self.opp_board = []
+
+        for y_count in range(10):
+            line = []
+            for x_count in range(10):
+                line.append('_')
+            self.opp_board.append(line)
+
+    def get_hits(self, ship):
+        return self.ship_health[ship]
+
+    def reduce_health(self, ship):
+        self.ship_health[ship] -= 1
+        if self.ship_health[ship] == 0:
+            return True
+        return False
+
+    def calibrate_shot(self, x, y):
+        # Duplicate hit check
+        if self.opp_board[y][x] != '_':
+            return "Gone"
 
         # handles detecting hit
-        player_board = open('own_board.txt', 'r')
+        player_board = open(self.player_board, 'r')
         player_board.seek(0)
         lines = player_board.readlines()
         row = list(lines[y])
         hit = row[x]
         player_board.close()
         if hit == '_':
-            return 0
+            self.update_opp_board(False, x, y)
+            return "hit=0"
         else:
-            return 1
+            self.update_opp_board(True, x, y)
+            if self.reduce_health(hit):
+                if self.check_winner():
+                    return "hit=1&\sink=%s\nYou've Won!" % hit
+                else:
+                    return "hit=1&\sink=%s" % hit
+            return "hit=1"
+
+    def check_winner(self):
+        for value in self.ship_health:
+            if self.ship_health[value] != 0:
+                return False
+        return True
+
+    def update_opp_board(self, switch, x, y):
+        if switch:
+            self.opp_board[y][x] = "O"
+        else:
+            self.opp_board[y][x] = "X"
+
+    def setfile(self, filename):
+        self.player_board = filename
+
+    def getfile(self, filename):
+        if self.player_board == filename:
+            return self.player_board
+        elif self.opp_board:
+            return self.opp_board
+        else:
+            return "File Not Found"
 
 
 def main():
@@ -85,29 +140,25 @@ def main():
     parser.add_argument('board', action='store')
     args = parser.parse_args()
 
-    port = int(args.port) # may wanna put try on this later
-    print("serving at port: ", port)
+    port = int(args.port)  # may wanna put try on this later
+    host = 'localhost'  # Don't think this means we have to close the socket
+    print("serving at: %s:%s" % (host, port))
     board_loc = args.board
-    host = socket.gethostname() # Don't think this means we have to close the socket
-    read_board(board_loc)
 
-    initServer(host, port)
+    board.setfile(board_loc)
 
-
-def read_board(board_loc):
-    # may be best to init opponent_board.txt here too?
-    board = open(board_loc, "r")
-    lines = board.readlines()
-    for line in lines:
-        print(line)
+    init_server(host, port)
 
 
-def initServer(host, port):
-    address = (host, port) # tuple forms address of the server
+def init_server(host, port):
+    address = (host, port)  # tuple forms address of the server
     handler = BattleshipServer
-    http_client = HTTPServer(address, handler)
-    http_client.serve_forever()
+
+    http_server = HTTPServer(address, handler)
+
+    http_server.serve_forever()
 
 
 if __name__ == '__main__':
+    board = Board()
     main()
