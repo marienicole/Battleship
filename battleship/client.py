@@ -1,32 +1,30 @@
 #!/usr/bin/python3
 '''
 CSCI 466: Networks Programming Assignment 1.
-Authored by Marie Morin and Hughe Jackovich.
+Authored by Marie Morin and Hugh Jackovich.
 '''
-import argparse, http.client, re
+import argparse, http.client, re, requests
 
 
 def main():
     parser = argparse.ArgumentParser(description='Define server IP, connection port and user\'s board.')
-    parser.add_argument('server', action='store')  # , description='IP of the server')
-    parser.add_argument('port', action='store')  # , description='Port to connect to server')
-    parser.add_argument('x_loc', action='store')  # , description='X-axis location of fire')
-    parser.add_argument('y_loc', action='store')  # , description='Y-axis location of fire')
-    args = parser.parse_args()  # Had to comment these out to run
+    parser.add_argument('server', action='store')
+    parser.add_argument('port', action='store')
+    parser.add_argument('x_loc', action='store')
+    parser.add_argument('y_loc', action='store')
+    args = parser.parse_args()
 
     server_ip = args.server
     port = args.port
     x_loc = args.x_loc
     y_loc = args.y_loc
-    # host = socket.gethostname()
 
-    conn = http.client.HTTPConnection('127.0.0.1', port)
-    conn.request("POST", 'http://%s:%s?x=%s&y=%s' % (server_ip, port, x_loc, y_loc))
-    response = conn.getresponse()
-    print(response.status, response.reason)
-    if response.status == 200:
-        update_file(int(x_loc), int(y_loc), response.reason)
-    conn.close()
+    r = requests.post('http://%s:%s?x=%s&y=%s' % (server_ip, port, x_loc, y_loc))
+    if r.status_code == 200:
+        if "Win" in r.reason:
+            print("Yay! You won the game!")
+        update_file(int(x_loc), int(y_loc), r.reason)
+
 
 
 def update_file(x, y, hit):

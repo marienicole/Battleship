@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 '''
 CSCI 466: Networks Programming Assignment 1.
-Authored by Marie Morin and Hughe Jackovich.
+Authored by Marie Morin and Hugh Jackovich.
 '''
 import re, argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from time import sleep
 
 
 class BattleshipServer(BaseHTTPRequestHandler):
@@ -35,7 +36,6 @@ class BattleshipServer(BaseHTTPRequestHandler):
 
     def response(self, msg=None):
         self.send_response(200, msg)
-        self.send_header('Content-type', 'text/html')
         self.end_headers()
 
     def bad_request(self, msg=None):
@@ -51,17 +51,20 @@ class BattleshipServer(BaseHTTPRequestHandler):
         self.end_headers()
 
     def parse_url(self, url):
-        coords = []
-        for count in range(len(url)):
-            if url[count] == '=':
-                coords.append(url[count+1])
-
-        coords = [int(i) for i in coords] # list comprehension to change to int list
-
-        if all((i < 11) and (i > -1) for i in coords):  # makeshifty, we'll want to protect the type casting
-            return board.calibrate_shot(coords[0], coords[1])  # or return value & move on from there if option route
-        else:
+        if len(url) > 9:
             self.not_found()
+        else:
+            coords = []
+            for count in range(len(url)):
+                if url[count] == '=':
+                    coords.append(url[count+1])
+
+            coords = [int(i) for i in coords] # list comprehension to change to int list
+
+            if all((i < 10) and (i > -1) for i in coords):  # makeshifty, we'll want to protect the type casting
+                return board.calibrate_shot(coords[0], coords[1])  # or return value & move on from there if option route
+            else:
+                self.not_found()
 
 
 class Board:
@@ -105,7 +108,7 @@ class Board:
             self.update_opp_board(True, x, y)
             if self.reduce_health(hit):
                 if self.check_winner():
-                    return "hit=1&\sink=%s\nYou've Won!" % hit
+                    return "hit=1&\sink=%s&\Win\n" % hit
                 else:
                     return "hit=1&\sink=%s" % hit
             return "hit=1"
@@ -160,5 +163,6 @@ def init_server(host, port):
 
 
 if __name__ == '__main__':
+    global http_server
     board = Board()
     main()
