@@ -25,7 +25,7 @@ class BattleshipServer(BaseHTTPRequestHandler):
             file = open('opponent_board.txt', 'rb')
 
         data = file.read()
-        utf_data= data.decode('utf8').replace('\n', '<br>')
+        utf_data= data.decode('utf8')
         binary_data = utf_data.encode('utf-8')
 
         self.send_response(200)
