@@ -3,7 +3,7 @@
 CSCI 466: Networks Programming Assignment 1.
 Authored by Marie Morin and Hugh Jackovich.
 '''
-import argparse, http.client, re, requests
+import argparse, re, requests
 
 
 def main():
