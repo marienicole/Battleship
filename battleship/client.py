@@ -20,21 +20,9 @@ def main():
     y_loc = args.y_loc
 
     r = requests.post('http://%s:%s?x=%s&y=%s' % (server_ip, port, x_loc, y_loc))
+    print("%s %s" %(r.status_code, r.reason))
     if r.status_code == 200:
-        if "hit=1" in r.reason:
-            print("Hit :)")
-        elif "hit=0" in r.reason:
-            print("Miss :(")
-        elif "Win" in r.reason:
-            print("Yay! You won the game!")
-        elif "sink" in r.reason:
-            print("You sank %s" % r.reason)
         update_file(int(x_loc), int(y_loc), r.reason)
-    elif r.status_code == (404 or 400):
-        print("Uh oh! That location doesn't exist.")
-    elif r.status_code == 410:
-        print("You already bombed that section.")
-
 
 
 def update_file(x, y, hit):
